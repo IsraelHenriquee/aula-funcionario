@@ -1,11 +1,13 @@
 <template>
   <div class="min-h-screen flex flex-col bg-background">
     <TheHeader />
-    
+
     <main class="flex-1">
-      <slot />
+      <div class="container mx-auto px-4 py-6">
+        <slot />
+      </div>
     </main>
-    
+
     <TheFooter />
   </div>
 </template>
