@@ -28,13 +28,28 @@
           >
             Novo Cadastro
           </NuxtLink>
-          <NuxtLink 
-            to="/login" 
-            class="text-white hover:text-primary-400 transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
-            :class="{ 'text-primary-400 bg-secondary-800': $route.path === '/login' }"
-          >
-            Login
-          </NuxtLink>
+          
+          <!-- Menu condicional baseado no estado de autenticação -->
+          <template v-if="user">
+            <span class="text-white px-3 py-2 text-sm">
+              Olá, {{ user.email }}
+            </span>
+            <button
+              @click="handleLogout"
+              class="text-white hover:text-primary-400 transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
+            >
+              Sair
+            </button>
+          </template>
+          <template v-else>
+            <NuxtLink 
+              to="/login" 
+              class="text-white hover:text-primary-400 transition-colors duration-200 px-3 py-2 rounded-md text-sm font-medium"
+              :class="{ 'text-primary-400 bg-secondary-800': $route.path === '/login' }"
+            >
+              Login
+            </NuxtLink>
+          </template>
         </nav>
 
         <!-- Mobile menu button -->
@@ -72,14 +87,29 @@
           >
             Novo Cadastro
           </NuxtLink>
-          <NuxtLink 
-            to="/login" 
-            @click="closeMobileMenu"
-            class="text-white hover:text-primary-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
-            :class="{ 'text-primary-400 bg-secondary-800': $route.path === '/login' }"
-          >
-            Login
-          </NuxtLink>
+          
+          <!-- Menu mobile condicional -->
+          <template v-if="user">
+            <div class="text-white px-3 py-2 text-base">
+              Olá, {{ user.email }}
+            </div>
+            <button
+              @click="handleLogout"
+              class="text-white hover:text-primary-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200 w-full text-left"
+            >
+              Sair
+            </button>
+          </template>
+          <template v-else>
+            <NuxtLink 
+              to="/login" 
+              @click="closeMobileMenu"
+              class="text-white hover:text-primary-400 block px-3 py-2 rounded-md text-base font-medium transition-colors duration-200"
+              :class="{ 'text-primary-400 bg-secondary-800': $route.path === '/login' }"
+            >
+              Login
+            </NuxtLink>
+          </template>
         </div>
       </div>
     </div>
@@ -87,9 +117,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import type { User } from '@supabase/supabase-js'
 
 const isMobileMenuOpen = ref(false)
+
+// Estado de autenticação
+const user = ref<User | null>(null)
+const isClient = ref(false)
 
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
@@ -98,4 +133,36 @@ const toggleMobileMenu = () => {
 const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
+
+const handleLogout = async () => {
+  if (!isClient.value) return
+  
+  try {
+    const { logout } = useAuth()
+    await logout()
+    closeMobileMenu()
+  } catch (err) {
+    console.error('Erro no logout:', err)
+  }
+}
+
+// Verificar usuário ao montar o componente (apenas no cliente)
+onMounted(async () => {
+  isClient.value = true
+  
+  if (import.meta.client) {
+    try {
+      const { user: authUser, checkUser } = useAuth()
+      await checkUser()
+      user.value = authUser.value
+      
+      // Observar mudanças no usuário
+      watch(authUser, (newUser) => {
+        user.value = newUser
+      })
+    } catch (err) {
+      console.error('Erro ao verificar usuário:', err)
+    }
+  }
+})
 </script>
