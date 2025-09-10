@@ -23,5 +23,5 @@ RUN npm run build
 # Expõe a porta padrão do Nuxt
 EXPOSE 3000
 
-# Comando para iniciar o servidor
-CMD ["npm", "run", "preview"]
+# Comando para iniciar o servidor em produção
+CMD ["node", ".output/server/index.mjs"]
